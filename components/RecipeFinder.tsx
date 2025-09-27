@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { RecipeCard } from './RecipeCard';
 import { Recipe } from '@/lib/types/recipe';
-import { parseRecipesFromMarkdown, extractToolCallResults } from '@/lib/utils/recipe-parser';
+import { parseStreamedRecipeResponse } from '@/lib/utils/recipe-parser';
 
 export function RecipeFinder() {
   const [ingredients, setIngredients] = useState<string[]>([]);
@@ -11,7 +11,7 @@ export function RecipeFinder() {
   const [isLoading, setIsLoading] = useState(false);
   const [streamedContent, setStreamedContent] = useState('');
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [viewMode, setViewMode] = useState<'cards' | 'chat'>('cards');
+  const [statusMessage, setStatusMessage] = useState('');
 
   const addIngredient = () => {
     if (currentIngredient.trim()) {
@@ -30,6 +30,7 @@ export function RecipeFinder() {
     setIsLoading(true);
     setStreamedContent('');
     setRecipes([]);
+    setStatusMessage('');
 
     try {
       const response = await fetch('/api/recipes/search', {
@@ -62,8 +63,12 @@ export function RecipeFinder() {
           fullText += chunk;
           setStreamedContent(fullText);
 
-          // Try to extract recipes from the streamed content
-          extractRecipesFromText(fullText);
+          // Parse status and recipes from the streamed content
+          const parsed = parseStreamedRecipeResponse(fullText);
+          setStatusMessage(parsed.status);
+          if (parsed.recipes.length > 0) {
+            setRecipes(parsed.recipes);
+          }
         }
       }
     } catch (error) {
@@ -74,20 +79,6 @@ export function RecipeFinder() {
     }
   };
 
-  const extractRecipesFromText = (text: string) => {
-    // First try to extract tool call results
-    let extractedRecipes = extractToolCallResults(text);
-    
-    // If no tool results, try markdown parsing
-    if (extractedRecipes.length === 0) {
-      extractedRecipes = parseRecipesFromMarkdown(text);
-    }
-    
-    // Update recipes if we found any
-    if (extractedRecipes.length > 0) {
-      setRecipes(extractedRecipes);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-zinc-900 dark:to-zinc-950">
@@ -161,65 +152,37 @@ export function RecipeFinder() {
           </button>
         </div>
 
-        {/* Results Section */}
-        {(streamedContent || recipes.length > 0) && (
-          <>
-            {/* View Toggle */}
-            {recipes.length > 0 && (
-              <div className="flex justify-center mb-6">
-                <div className="inline-flex rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1">
-                  <button
-                    onClick={() => setViewMode('cards')}
-                    className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                      viewMode === 'cards'
-                        ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm'
-                        : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                    }`}
-                  >
-                    📖 Recipe Cards
-                  </button>
-                  <button
-                    onClick={() => setViewMode('chat')}
-                    className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                      viewMode === 'chat'
-                        ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm'
-                        : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                    }`}
-                  >
-                    💬 AI Response
-                  </button>
-                </div>
+        {/* Status Bar */}
+        {statusMessage && (
+          <div className="mb-4">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-3 border border-zinc-200 dark:border-zinc-700">
+              <div className="flex items-center gap-2">
+                {isLoading && (
+                  <svg className="animate-spin h-4 w-4 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+                <span className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">
+                  {statusMessage}
+                </span>
               </div>
-            )}
+            </div>
+          </div>
+        )}
 
-            {/* Recipe Cards View */}
-            {viewMode === 'cards' && recipes.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-semibold mb-4 text-zinc-900 dark:text-white">
-                  🍽️ Recommended Recipes
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {recipes.map((recipe, index) => (
-                    <RecipeCard key={index} recipe={recipe} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* AI Chat View */}
-            {(viewMode === 'chat' || recipes.length === 0) && streamedContent && (
-              <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-xl p-6">
-                <h2 className="text-xl font-semibold mb-4 text-zinc-900 dark:text-white">
-                  🤖 AI Chef Assistant
-                </h2>
-                <div className="prose prose-zinc dark:prose-invert max-w-none">
-                  <div className="whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
-                    {streamedContent}
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
+        {/* Recipe Results */}
+        {recipes.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-semibold mb-4 text-zinc-900 dark:text-white">
+              🍽️ Recommended Recipes
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {recipes.map((recipe, index) => (
+                <RecipeCard key={index} recipe={recipe} />
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </div>

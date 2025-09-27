@@ -102,13 +102,70 @@ function parseRecipeSection(section: string): Recipe | null {
   }
 }
 
+// Parse status updates and recipes from the new format
+export function parseStreamedRecipeResponse(text: string): {
+  status: string;
+  recipes: Recipe[];
+} {
+  // Find the marker that separates status from recipes
+  const markerIndex = text.indexOf('[RECIPES_START]');
+  
+  if (markerIndex === -1) {
+    // No recipes yet, just status updates
+    return {
+      status: text.trim(),
+      recipes: []
+    };
+  }
+  
+  // Split into status and recipe parts
+  const statusText = text.substring(0, markerIndex).trim();
+  const recipesText = text.substring(markerIndex + '[RECIPES_START]'.length).trim();
+  
+  let recipes: Recipe[] = [];
+  
+  try {
+    // Parse the JSON array of recipes
+    const parsed = JSON.parse(recipesText);
+    if (Array.isArray(parsed)) {
+      recipes = parsed.filter(item => 
+        item && typeof item === 'object' && 
+        (item.name || item.recipe?.name)
+      ).map(item => item.recipe || item);
+    }
+  } catch (error) {
+    console.error('Error parsing recipes JSON:', error);
+    // Try to extract any JSON that might be there
+    const jsonMatch = recipesText.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        if (Array.isArray(parsed)) {
+          recipes = parsed.filter(item => item && typeof item === 'object');
+        }
+      } catch (e) {
+        console.error('Failed to parse extracted JSON:', e);
+      }
+    }
+  }
+  
+  // Get the last status line for display
+  const statusLines = statusText.split('\n').filter(line => line.trim());
+  const lastStatus = statusLines[statusLines.length - 1] || '';
+  
+  return {
+    status: lastStatus,
+    recipes
+  };
+}
+
 // Alternative parser for tool-generated JSON in the stream
 export function extractToolCallResults(text: string): Recipe[] {
   const recipes: Recipe[] = [];
 
-  // Look for tool call results in the text
-  const toolCallPattern = /```json\n(.*?)\n```/gks;
-  const matches = text.matchAll(toolCallPattern);
+  // Look for tool call results in the text  
+  const toolCallPattern = new RegExp('```json\\n(.*?)\\n```', 'gs');
+  const matches = Array.from(text.matchAll(toolCallPattern));
 
   for (const match of matches) {
     try {

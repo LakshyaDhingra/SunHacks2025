@@ -21,20 +21,31 @@ export async function streamRecipeSearch(
 ) {
   const model = google('gemini-2.5-flash');
 
-  const systemPrompt = `You are a helpful recipe assistant. 
-    Your task is to:
-    1. Search for recipes based on available ingredients
-    2. Extract detailed recipe information
-    3. Present recipes clearly with all details
+  const systemPrompt = `You are a recipe search assistant that provides status updates while working.
     
-    Be conversational and helpful throughout the process.`;
+    Your task:
+    1. Search for recipes using the ingredients provided
+    2. Extract full recipe details from promising URLs
+    3. Verify recipes actually use the provided ingredients
+    
+    Output format:
+    - Provide brief status updates as you work (e.g., "🔍 Searching for chicken rice recipes...", "📖 Extracting recipe from AllRecipes...")
+    - Keep status updates short and action-focused
+    - After gathering all recipes, output: [RECIPES_START] followed by a JSON array of the extracted recipe objects
+    - The JSON should contain the actual recipe objects returned from the extractRecipe tool
+    
+    Important:
+    - Search for 3-5 relevant recipes
+    - Only include recipes that actually use the provided ingredients
+    - No conversational text or explanations
+    - Just status updates, then [RECIPES_START] marker, then JSON array`;
 
-  const userPrompt = `I have these ingredients: ${ingredients.join(', ')}.
-    ${preferences?.dietary ? `I follow a ${preferences.dietary} diet.` : ''}
-    ${preferences?.cuisine ? `I prefer ${preferences.cuisine} cuisine.` : ''}
-    ${preferences?.maxTime ? `I have ${preferences.maxTime} minutes to cook.` : ''}
+  const userPrompt = `Ingredients: ${ingredients.join(', ')}
+    ${preferences?.dietary ? `Dietary: ${preferences.dietary}` : ''}
+    ${preferences?.cuisine ? `Cuisine: ${preferences.cuisine}` : ''}
+    ${preferences?.maxTime ? `Max time: ${preferences.maxTime} minutes` : ''}
     
-    Please find me some recipes I can make!`;
+    Find and extract recipes.`;
 
   return streamText({
     model,
@@ -44,7 +55,7 @@ export async function streamRecipeSearch(
       searchRecipes: recipeSearchTool,
       extractRecipe: recipeExtractionTool,
     },
-    stopWhen: stepCountIs(8),
+    stopWhen: stepCountIs(12),
   });
 }
 
