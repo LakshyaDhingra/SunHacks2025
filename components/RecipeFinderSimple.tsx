@@ -3,10 +3,8 @@
 import { useState } from 'react';
 import { RecipeCard } from './RecipeCard';
 import { Recipe } from '@/lib/types/recipe';
-import Image from 'next/image';
-import logo from '@/app/assets/logo.png';
 
-export function RecipeFinder() {
+export function RecipeFinderSimple() {
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [currentIngredient, setCurrentIngredient] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -109,46 +107,40 @@ export function RecipeFinder() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-zinc-900 dark:to-zinc-950">
       <div className="w-full max-w-6xl mx-auto p-6">
-        {/* Brand + Search (Figma-style) */}
-        <div className="mt-8 mb-16 flex flex-col items-center gap-8">
-          <Image
-            src={logo}
-            alt="SparkBite logo"
-            priority
-            sizes="(min-width: 1024px) 224px, (min-width: 768px) 192px, 160px"
-            className="h-24 md:h-34 lg:h-40 w-auto"
-          />
+        <h1 className="text-4xl font-bold mb-2 text-center text-zinc-900 dark:text-white">
+          🍳 Recipe Finder
+        </h1>
+        <p className="text-center text-zinc-600 dark:text-zinc-400 mb-8">
+          Enter your ingredients and discover delicious recipes powered by AI
+        </p>
 
-          <div className="w-full max-w-3xl">
-            <div className="relative">
-              <input
-                type="text"
-                value={currentIngredient}
-                onChange={(e) => setCurrentIngredient(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addIngredient()}
-                placeholder="Select your ingredients"
-                className="w-full rounded-full bg-[color:var(--surface)] text-[#2E2A1F] placeholder-muted px-6 py-4 shadow-sm focus:outline-none focus:ring-4 focus:ring-[color:var(--brand)]/40"
-              />
-              <button
-                onClick={addIngredient}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-[color:var(--brand)] text-[#2E2A1F] font-semibold px-5 py-2 hover:opacity-90"
-              >
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Chips + Find Recipes */}
+        {/* Ingredient Input Section */}
         <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-xl p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4 text-zinc-900 dark:text-white">
             What&apos;s in your kitchen?
           </h2>
 
+          <div className="flex gap-2 mb-4">
+            <input
+              type="text"
+              value={currentIngredient}
+              onChange={(e) => setCurrentIngredient(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addIngredient()}
+              placeholder="Type an ingredient and press Enter"
+              className="flex-1 px-4 py-3 border-2 border-zinc-200 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white focus:outline-none focus:border-green-500 transition-colors"
+            />
+            <button
+              onClick={addIngredient}
+              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
+            >
+              + Add
+            </button>
+          </div>
+
           {/* Ingredient Chips */}
-          {ingredients.length > 0 ? (
+          {ingredients.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-6">
               {ingredients.map((ingredient, index) => (
                 <div
@@ -165,8 +157,6 @@ export function RecipeFinder() {
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-zinc-600 dark:text-zinc-300 mb-6">Add ingredients using the search above, then find recipes.</p>
           )}
 
           <button
