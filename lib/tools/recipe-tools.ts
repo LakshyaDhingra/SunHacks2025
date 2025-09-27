@@ -14,12 +14,12 @@ export const recipeSearchTool = tool({
     try {
       // Build search query
       const searchQuery = `recipe with ${ingredients.join(' ')} ${query || ''} site:allrecipes.com OR site:foodnetwork.com OR site:bbcgoodfood.com OR site:seriouseats.com OR site:tasty.co`;
-      
+
       // For a real implementation, you would use:
       // 1. Google Custom Search API
       // 2. Serper API
       // 3. Or web scraping
-      
+
       // Using a simple web search simulation for now
       // In production, replace this with actual API call
       const searchResults: RecipeSearchResult[] = [
@@ -42,10 +42,10 @@ export const recipeSearchTool = tool({
           source: "Serious Eats"
         }
       ];
-      
+
       // Filter results based on ingredients
       const filteredResults = searchResults.slice(0, limit);
-      
+
       return {
         success: true,
         results: filteredResults,
@@ -72,12 +72,12 @@ export const recipeExtractionTool = tool({
   execute: async ({ url }) => {
     try {
       console.log('Extracting recipe from:', url);
-      
+
       // In a real implementation, you would fetch and parse the URL
       // For now, we'll return sample data based on common recipe sites
-      
+
       let mockRecipe: Recipe;
-      
+
       if (url.includes('chicken-stir-fry')) {
         mockRecipe = {
           name: "Simple Chicken Stir-Fry",
@@ -196,7 +196,7 @@ export const recipeExtractionTool = tool({
           }
         };
       }
-      
+
       return {
         success: true,
         recipe: mockRecipe,
@@ -212,24 +212,3 @@ export const recipeExtractionTool = tool({
     }
   }
 });
-
-// Helper function to parse duration strings (PT15M -> 15 minutes)
-export function parseDuration(duration: string): string {
-  if (!duration) return '';
-  
-  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
-  if (!match) return duration;
-  
-  const hours = match[1] ? parseInt(match[1]) : 0;
-  const minutes = match[2] ? parseInt(match[2]) : 0;
-  
-  if (hours && minutes) {
-    return `${hours} hour${hours > 1 ? 's' : ''} ${minutes} minute${minutes > 1 ? 's' : ''}`;
-  } else if (hours) {
-    return `${hours} hour${hours > 1 ? 's' : ''}`;
-  } else if (minutes) {
-    return `${minutes} minute${minutes > 1 ? 's' : ''}`;
-  }
-  
-  return '';
-}

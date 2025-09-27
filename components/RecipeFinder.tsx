@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { RecipeCard } from './RecipeCard';
 import { Recipe } from '@/lib/types/recipe';
 
-export function RecipeFinderSimple() {
+export function RecipeFinder() {
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [currentIngredient, setCurrentIngredient] = useState('');
   const [isLoading, setIsLoading] = useState(false);

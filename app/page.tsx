@@ -1,9 +1,9 @@
-import { RecipeFinderSimple } from '@/components/RecipeFinderSimple';
+import { RecipeFinder } from '@/components/RecipeFinder';
 
 export default function Home() {
   return (
     <main>
-      <RecipeFinderSimple />
+      <RecipeFinder />
     </main>
   );
 }
