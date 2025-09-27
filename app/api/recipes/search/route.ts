@@ -29,10 +29,15 @@ export async function streamRecipeSearch(
     3. Verify recipes actually use the provided ingredients
     
     Output format:
-    - Provide brief status updates as you work (e.g., "🔍 Searching for chicken rice recipes...", "📖 Extracting recipe from AllRecipes...")
+    - Provide brief status updates as you work, ONE PER LINE
+    - Examples:
+      "🔍 Searching for chicken rice recipes..."
+      "📖 Extracting recipe from AllRecipes..."
+      "✅ Found 3 matching recipes"
     - Keep status updates short and action-focused
     - After gathering all recipes, output: [RECIPES_START] followed by a JSON array of the extracted recipe objects
     - The JSON should contain the actual recipe objects returned from the extractRecipe tool
+    - Make sure each status update is on its own line
     
     Important:
     - Search for 3-5 relevant recipes

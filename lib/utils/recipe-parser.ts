@@ -106,15 +106,19 @@ function parseRecipeSection(section: string): Recipe | null {
 export function parseStreamedRecipeResponse(text: string): {
   status: string;
   recipes: Recipe[];
+  hasCompleteJson: boolean;
 } {
   // Find the marker that separates status from recipes
   const markerIndex = text.indexOf('[RECIPES_START]');
   
   if (markerIndex === -1) {
     // No recipes yet, just status updates
+    const statusLines = text.split('\n').filter(line => line.trim());
+    const lastStatus = statusLines[statusLines.length - 1] || '';
     return {
-      status: text.trim(),
-      recipes: []
+      status: lastStatus,
+      recipes: [],
+      hasCompleteJson: false
     };
   }
   
@@ -123,29 +127,28 @@ export function parseStreamedRecipeResponse(text: string): {
   const recipesText = text.substring(markerIndex + '[RECIPES_START]'.length).trim();
   
   let recipes: Recipe[] = [];
+  let hasCompleteJson = false;
   
-  try {
-    // Parse the JSON array of recipes
-    const parsed = JSON.parse(recipesText);
-    if (Array.isArray(parsed)) {
-      recipes = parsed.filter(item => 
-        item && typeof item === 'object' && 
-        (item.name || item.recipe?.name)
-      ).map(item => item.recipe || item);
-    }
-  } catch (error) {
-    console.error('Error parsing recipes JSON:', error);
-    // Try to extract any JSON that might be there
-    const jsonMatch = recipesText.match(/\[[\s\S]*\]/);
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[0]);
-        if (Array.isArray(parsed)) {
-          recipes = parsed.filter(item => item && typeof item === 'object');
-        }
-      } catch (e) {
-        console.error('Failed to parse extracted JSON:', e);
+  // Only try to parse if we likely have complete JSON
+  // Check for closing bracket and that we have some content
+  if (recipesText.length > 2 && recipesText.includes(']')) {
+    // Find the last closing bracket (end of JSON array)
+    const lastBracketIndex = recipesText.lastIndexOf(']');
+    const jsonCandidate = recipesText.substring(0, lastBracketIndex + 1).trim();
+    
+    try {
+      // Parse only the complete JSON portion
+      const parsed = JSON.parse(jsonCandidate);
+      if (Array.isArray(parsed)) {
+        recipes = parsed.filter(item => 
+          item && typeof item === 'object' && 
+          (item.name || item.recipe?.name)
+        ).map(item => item.recipe || item);
+        hasCompleteJson = true;
       }
+    } catch (error) {
+      // JSON is still incomplete or malformed, wait for more data
+      // Don't log error to avoid spamming console
     }
   }
   
@@ -155,7 +158,8 @@ export function parseStreamedRecipeResponse(text: string): {
   
   return {
     status: lastStatus,
-    recipes
+    recipes,
+    hasCompleteJson
   };
 }
 

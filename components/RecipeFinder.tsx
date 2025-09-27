@@ -153,7 +153,7 @@ export function RecipeFinder() {
         </div>
 
         {/* Status Bar */}
-        {statusMessage && (
+        {(statusMessage || isLoading) && (
           <div className="mb-4">
             <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-3 border border-zinc-200 dark:border-zinc-700">
               <div className="flex items-center gap-2">
@@ -164,7 +164,7 @@ export function RecipeFinder() {
                   </svg>
                 )}
                 <span className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">
-                  {statusMessage}
+                  {statusMessage || 'Starting recipe search...'}
                 </span>
               </div>
             </div>
