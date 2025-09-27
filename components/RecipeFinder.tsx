@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { RecipeCard } from './RecipeCard';
 import { Recipe } from '@/lib/types/recipe';
+import { parseRecipesFromMarkdown, extractToolCallResults } from '@/lib/utils/recipe-parser';
 
 export function RecipeFinder() {
   const [ingredients, setIngredients] = useState<string[]>([]);
@@ -10,6 +11,7 @@ export function RecipeFinder() {
   const [isLoading, setIsLoading] = useState(false);
   const [streamedContent, setStreamedContent] = useState('');
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [viewMode, setViewMode] = useState<'cards' | 'chat'>('cards');
 
   const addIngredient = () => {
     if (currentIngredient.trim()) {
@@ -40,8 +42,10 @@ export function RecipeFinder() {
       });
 
       if (!response.ok) {
-        console.log('Response not ok:', response.statusText);
-        throw new Error('Failed to search recipes');
+        console.log('Response not ok:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('Error response body:', errorText);
+        throw new Error(`Failed to search recipes: ${response.status} ${response.statusText}`);
       }
 
       const reader = response.body?.getReader();
@@ -71,38 +75,17 @@ export function RecipeFinder() {
   };
 
   const extractRecipesFromText = (text: string) => {
-    // Simple extraction - in real app, you'd parse the structured data
-    // For now, just showing the mock recipes when we detect certain keywords
-    if (text.includes('chicken') || text.includes('pasta') || text.includes('recipe')) {
-      // This would normally parse actual recipe data from the stream
-      const mockRecipes: Recipe[] = [
-        {
-          name: "Quick Chicken Stir-Fry",
-          url: "#",
-          description: "A delicious and quick stir-fry perfect for weeknight dinners",
-          ingredients: [
-            { name: "Chicken breast", amount: "1 lb" },
-            { name: "Mixed vegetables", amount: "2 cups" },
-            { name: "Soy sauce", amount: "3 tbsp" },
-            { name: "Garlic", amount: "2 cloves" }
-          ],
-          instructions: [
-            "Cut chicken into bite-sized pieces",
-            "Heat oil in a wok over high heat",
-            "Cook chicken until golden",
-            "Add vegetables and stir-fry",
-            "Add soy sauce and garlic",
-            "Serve over rice"
-          ],
-          prepTime: "10 minutes",
-          cookTime: "15 minutes",
-          servings: 4
-        }
-      ];
-
-      if (recipes.length === 0) {
-        setRecipes(mockRecipes);
-      }
+    // First try to extract tool call results
+    let extractedRecipes = extractToolCallResults(text);
+    
+    // If no tool results, try markdown parsing
+    if (extractedRecipes.length === 0) {
+      extractedRecipes = parseRecipesFromMarkdown(text);
+    }
+    
+    // Update recipes if we found any
+    if (extractedRecipes.length > 0) {
+      setRecipes(extractedRecipes);
     }
   };
 
@@ -178,32 +161,65 @@ export function RecipeFinder() {
           </button>
         </div>
 
-        {/* AI Response */}
-        {streamedContent && (
-          <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-xl p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4 text-zinc-900 dark:text-white">
-              🤖 AI Chef Assistant
-            </h2>
-            <div className="prose prose-zinc dark:prose-invert max-w-none">
-              <div className="whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
-                {streamedContent}
+        {/* Results Section */}
+        {(streamedContent || recipes.length > 0) && (
+          <>
+            {/* View Toggle */}
+            {recipes.length > 0 && (
+              <div className="flex justify-center mb-6">
+                <div className="inline-flex rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1">
+                  <button
+                    onClick={() => setViewMode('cards')}
+                    className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                      viewMode === 'cards'
+                        ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm'
+                        : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                    }`}
+                  >
+                    📖 Recipe Cards
+                  </button>
+                  <button
+                    onClick={() => setViewMode('chat')}
+                    className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                      viewMode === 'chat'
+                        ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm'
+                        : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                    }`}
+                  >
+                    💬 AI Response
+                  </button>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* Recipe Results */}
-        {recipes.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-semibold mb-4 text-zinc-900 dark:text-white">
-              🍽️ Recommended Recipes
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {recipes.map((recipe, index) => (
-                <RecipeCard key={index} recipe={recipe} />
-              ))}
-            </div>
-          </div>
+            {/* Recipe Cards View */}
+            {viewMode === 'cards' && recipes.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-semibold mb-4 text-zinc-900 dark:text-white">
+                  🍽️ Recommended Recipes
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {recipes.map((recipe, index) => (
+                    <RecipeCard key={index} recipe={recipe} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* AI Chat View */}
+            {(viewMode === 'chat' || recipes.length === 0) && streamedContent && (
+              <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-xl p-6">
+                <h2 className="text-xl font-semibold mb-4 text-zinc-900 dark:text-white">
+                  🤖 AI Chef Assistant
+                </h2>
+                <div className="prose prose-zinc dark:prose-invert max-w-none">
+                  <div className="whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
+                    {streamedContent}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

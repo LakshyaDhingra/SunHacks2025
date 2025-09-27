@@ -56,14 +56,16 @@ export async function POST(req: Request) {
       return new Response('Please provide ingredients', { status: 400 });
     }
 
-    console.log("HERE");
+    console.log("Received request with ingredients:", ingredients);
+    console.log("GEMINI_API_KEY exists:", !!process.env.GEMINI_API_KEY);
 
     const result = await streamRecipeSearch(ingredients, preferences);
 
-    console.log(result, "RESULT");
+    console.log("Stream result created successfully");
     return result.toTextStreamResponse();
   } catch (error) {
     console.error('Error in recipe search API:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return new Response(
       JSON.stringify({
         error: 'Failed to search recipes',
