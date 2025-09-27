@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { RecipeCard } from './RecipeCard';
 import { Recipe } from '@/lib/types/recipe';
 import { parseStreamedRecipeResponse } from '@/lib/utils/recipe-parser';
-import Image from 'next/image';
-import logo from '@/app/assets/logo.png';
+import { Logo } from './Logo';
 
 export function RecipeFinder() {
   const [ingredients, setIngredients] = useState<string[]>([]);
@@ -87,13 +86,9 @@ export function RecipeFinder() {
       <div className="w-full max-w-6xl mx-auto p-6">
         {/* Brand + Search (Figma-style) */}
         <div className="mt-8 mb-16 flex flex-col items-center gap-8">
-          <Image
-            src={logo}
-            alt="SparkBite logo"
-            priority
-            sizes="(min-width: 1024px) 224px, (min-width: 768px) 192px, 160px"
-            className="h-24 md:h-34 lg:h-40 w-auto"
-          />
+          <div className="h-24 md:h-34 lg:h-40 w-auto">
+            <Logo />
+          </div>
 
           <div className="w-full max-w-3xl">
             <div className="relative">
