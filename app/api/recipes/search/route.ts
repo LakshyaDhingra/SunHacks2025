@@ -21,20 +21,45 @@ export async function streamRecipeSearch(
 ) {
   const model = google('gemini-2.5-flash');
 
-  const systemPrompt = `You are a helpful recipe assistant. 
-    Your task is to:
-    1. Search for recipes based on available ingredients
-    2. Extract detailed recipe information
-    3. Present recipes clearly with all details
+  const systemPrompt = `You are a recipe search assistant that provides status updates while working.
     
-    Be conversational and helpful throughout the process.`;
+    Your task:
+    1. Search for recipes using the ingredients provided
+    2. Extract full recipe details from promising URLs
+    3. Continue searching until you have AT LEAST 3 recipes
+    
+    Search strategy:
+    - First search with all ingredients together
+    - If you get less than 5 results, search again with variations (e.g., "chicken rice casserole", "chicken fried rice", etc.)
+    - Extract recipes from different sources for variety
+    - If extraction fails for a URL, try the next one
+    
+    Output format:
+    - Provide brief status updates as you work, ONE PER LINE
+    - Examples:
+      "🔍 Searching for chicken rice recipes..."
+      "📖 Extracting recipe from AllRecipes..."
+      "⚠️ Extraction failed, trying next..."
+      "✅ Found 3 matching recipes"
+    - Keep status updates short and action-focused
+    - After gathering all recipes, output: [RECIPES_START] followed by a JSON array of the extracted recipe objects
+    - The JSON should contain the actual recipe objects returned from the extractRecipe tool
+    - Make sure each status update is on its own line
+    
+    Important:
+    - MUST find at least 3 recipes (keep searching if needed)
+    - Maximum 5 recipes
+    - Try different search queries if the first doesn't yield enough results
+    - If extraction fails, note it and try another URL
+    - No conversational text or explanations
+    - Just status updates, then [RECIPES_START] marker, then JSON array`;
 
-  const userPrompt = `I have these ingredients: ${ingredients.join(', ')}.
-    ${preferences?.dietary ? `I follow a ${preferences.dietary} diet.` : ''}
-    ${preferences?.cuisine ? `I prefer ${preferences.cuisine} cuisine.` : ''}
-    ${preferences?.maxTime ? `I have ${preferences.maxTime} minutes to cook.` : ''}
+  const userPrompt = `Ingredients: ${ingredients.join(', ')}
+    ${preferences?.dietary ? `Dietary: ${preferences.dietary}` : ''}
+    ${preferences?.cuisine ? `Cuisine: ${preferences.cuisine}` : ''}
+    ${preferences?.maxTime ? `Max time: ${preferences.maxTime} minutes` : ''}
     
-    Please find me some recipes I can make!`;
+    Find and extract recipes.`;
 
   return streamText({
     model,
@@ -44,7 +69,7 @@ export async function streamRecipeSearch(
       searchRecipes: recipeSearchTool,
       extractRecipe: recipeExtractionTool,
     },
-    stopWhen: stepCountIs(8),
+    stopWhen: stepCountIs(20),
   });
 }
 
@@ -56,14 +81,16 @@ export async function POST(req: Request) {
       return new Response('Please provide ingredients', { status: 400 });
     }
 
-    console.log("HERE");
+    console.log("Received request with ingredients:", ingredients);
+    console.log("GEMINI_API_KEY exists:", !!process.env.GEMINI_API_KEY);
 
     const result = await streamRecipeSearch(ingredients, preferences);
 
-    console.log(result, "RESULT");
+    console.log("Stream result created successfully");
     return result.toTextStreamResponse();
   } catch (error) {
     console.error('Error in recipe search API:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return new Response(
       JSON.stringify({
         error: 'Failed to search recipes',

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Recipe } from '@/lib/types/recipe';
+import { formatDuration, formatAmount } from '@/lib/utils/format';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -32,12 +33,12 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
         <div className="flex flex-wrap gap-3 mb-4">
           {recipe.prepTime && (
             <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded-full text-sm font-medium">
-              ⏱️ Prep: {recipe.prepTime}
+              ⏱️ Prep: {formatDuration(recipe.prepTime)}
             </span>
           )}
           {recipe.cookTime && (
             <span className="px-3 py-1 bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-200 rounded-full text-sm font-medium">
-              🔥 Cook: {recipe.cookTime}
+              🔥 Cook: {formatDuration(recipe.cookTime)}
             </span>
           )}
           {recipe.servings && (
@@ -56,7 +57,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
               <li key={index} className="text-sm text-zinc-600 dark:text-zinc-400 flex items-start">
                 <span className="text-green-600 dark:text-green-400 mr-2">•</span>
                 <span>
-                  {ingredient.amount && <strong>{ingredient.amount}</strong>} {ingredient.name}
+                  {ingredient.amount && <strong>{formatAmount(ingredient.amount)}</strong>} {ingredient.name}
                 </span>
               </li>
             ))}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { RecipeCard } from './RecipeCard';
 import { Recipe } from '@/lib/types/recipe';
+import { parseStreamedRecipeResponse } from '@/lib/utils/recipe-parser';
 import Image from 'next/image';
 import logo from '@/app/assets/logo.png';
 
@@ -12,6 +13,7 @@ export function RecipeFinder() {
   const [isLoading, setIsLoading] = useState(false);
   const [streamedContent, setStreamedContent] = useState('');
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [statusMessage, setStatusMessage] = useState('');
 
   const addIngredient = () => {
     if (currentIngredient.trim()) {
@@ -30,6 +32,7 @@ export function RecipeFinder() {
     setIsLoading(true);
     setStreamedContent('');
     setRecipes([]);
+    setStatusMessage('');
 
     try {
       const response = await fetch('/api/recipes/search', {
@@ -42,8 +45,10 @@ export function RecipeFinder() {
       });
 
       if (!response.ok) {
-        console.log('Response not ok:', response.statusText);
-        throw new Error('Failed to search recipes');
+        console.log('Response not ok:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('Error response body:', errorText);
+        throw new Error(`Failed to search recipes: ${response.status} ${response.statusText}`);
       }
 
       const reader = response.body?.getReader();
@@ -60,8 +65,12 @@ export function RecipeFinder() {
           fullText += chunk;
           setStreamedContent(fullText);
 
-          // Try to extract recipes from the streamed content
-          extractRecipesFromText(fullText);
+          // Parse status and recipes from the streamed content
+          const parsed = parseStreamedRecipeResponse(fullText);
+          setStatusMessage(parsed.status);
+          if (parsed.recipes.length > 0) {
+            setRecipes(parsed.recipes);
+          }
         }
       }
     } catch (error) {
@@ -72,41 +81,6 @@ export function RecipeFinder() {
     }
   };
 
-  const extractRecipesFromText = (text: string) => {
-    // Simple extraction - in real app, you'd parse the structured data
-    // For now, just showing the mock recipes when we detect certain keywords
-    if (text.includes('chicken') || text.includes('pasta') || text.includes('recipe')) {
-      // This would normally parse actual recipe data from the stream
-      const mockRecipes: Recipe[] = [
-        {
-          name: "Quick Chicken Stir-Fry",
-          url: "#",
-          description: "A delicious and quick stir-fry perfect for weeknight dinners",
-          ingredients: [
-            { name: "Chicken breast", amount: "1 lb" },
-            { name: "Mixed vegetables", amount: "2 cups" },
-            { name: "Soy sauce", amount: "3 tbsp" },
-            { name: "Garlic", amount: "2 cloves" }
-          ],
-          instructions: [
-            "Cut chicken into bite-sized pieces",
-            "Heat oil in a wok over high heat",
-            "Cook chicken until golden",
-            "Add vegetables and stir-fry",
-            "Add soy sauce and garlic",
-            "Serve over rice"
-          ],
-          prepTime: "10 minutes",
-          cookTime: "15 minutes",
-          servings: 4
-        }
-      ];
-
-      if (recipes.length === 0) {
-        setRecipes(mockRecipes);
-      }
-    }
-  };
 
   return (
     <div className="min-h-screen">
@@ -188,15 +162,20 @@ export function RecipeFinder() {
           </button>
         </div>
 
-        {/* AI Response */}
-        {streamedContent && (
-          <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-xl p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4 text-zinc-900 dark:text-white">
-              🤖 AI Chef Assistant
-            </h2>
-            <div className="prose prose-zinc dark:prose-invert max-w-none">
-              <div className="whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
-                {streamedContent}
+        {/* Status Bar */}
+        {(statusMessage || isLoading) && (
+          <div className="mb-4">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-3 border border-zinc-200 dark:border-zinc-700">
+              <div className="flex items-center gap-2">
+                {isLoading && (
+                  <svg className="animate-spin h-4 w-4 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+                <span className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">
+                  {statusMessage || 'Starting recipe search...'}
+                </span>
               </div>
             </div>
           </div>
