@@ -26,13 +26,20 @@ export async function streamRecipeSearch(
     Your task:
     1. Search for recipes using the ingredients provided
     2. Extract full recipe details from promising URLs
-    3. Verify recipes actually use the provided ingredients
+    3. Continue searching until you have AT LEAST 3 recipes
+    
+    Search strategy:
+    - First search with all ingredients together
+    - If you get less than 5 results, search again with variations (e.g., "chicken rice casserole", "chicken fried rice", etc.)
+    - Extract recipes from different sources for variety
+    - If extraction fails for a URL, try the next one
     
     Output format:
     - Provide brief status updates as you work, ONE PER LINE
     - Examples:
       "🔍 Searching for chicken rice recipes..."
       "📖 Extracting recipe from AllRecipes..."
+      "⚠️ Extraction failed, trying next..."
       "✅ Found 3 matching recipes"
     - Keep status updates short and action-focused
     - After gathering all recipes, output: [RECIPES_START] followed by a JSON array of the extracted recipe objects
@@ -40,8 +47,10 @@ export async function streamRecipeSearch(
     - Make sure each status update is on its own line
     
     Important:
-    - Search for 3-5 relevant recipes
-    - Only include recipes that actually use the provided ingredients
+    - MUST find at least 3 recipes (keep searching if needed)
+    - Maximum 5 recipes
+    - Try different search queries if the first doesn't yield enough results
+    - If extraction fails, note it and try another URL
     - No conversational text or explanations
     - Just status updates, then [RECIPES_START] marker, then JSON array`;
 
@@ -60,7 +69,7 @@ export async function streamRecipeSearch(
       searchRecipes: recipeSearchTool,
       extractRecipe: recipeExtractionTool,
     },
-    stopWhen: stepCountIs(12),
+    stopWhen: stepCountIs(20),
   });
 }
 
