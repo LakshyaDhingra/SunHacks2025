@@ -215,6 +215,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
           onStart={handleStartTimer}
           duration={pendingTimer.duration}
           label={pendingTimer.label}
+          variant="panel"
         />
       )}
     </div>
