@@ -13,7 +13,7 @@ export function Navbar() {
     <nav className="w-full bg-gradient-to-r from-maroon-500 to-yellow-600 px-6 py-4 shadow-md flex items-center justify-between">
       {/* Left side: Brand */}
       <div className="text-2xl font-bold text-white">
-        <Image src="sparkbite-logo.svg" alt="Logo" width={100} height={100} />
+        <Image src="/logo_svg.svg" alt="Logo" width={100} height={100} />
       </div>
 
       {/* Right side: User section */}
@@ -40,7 +40,7 @@ export function Navbar() {
             onClick={() =>
               setUser({
                 name: "Lakshya",
-                avatar: "public/avatar.png",
+                avatar: "/avatar.png",
               })
             }
             className="bg-white text-red-600 font-semibold px-4 py-2 rounded-lg hover:bg-zinc-100 transition-colors"
