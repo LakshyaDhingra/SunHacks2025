@@ -80,7 +80,7 @@ function normalizeRecipe(raw: any): Recipe | null {
         amount: amountValue,
       };
     })
-    .filter((item): item is Recipe['ingredients'][number] => !!item && !!item.name);
+    .filter((item: any): item is Recipe['ingredients'][number] => !!item && !!item.name);
 
   const instructionSource = Array.isArray(raw.instructions)
     ? raw.instructions
@@ -97,7 +97,7 @@ function normalizeRecipe(raw: any): Recipe | null {
       }
       return undefined;
     })
-    .filter((step): step is string => !!step && step.length > 0);
+    .filter((step: any): step is string => !!step && step.length > 0);
 
   if (ingredients.length === 0 || instructions.length === 0) {
     return null;
