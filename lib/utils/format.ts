@@ -32,35 +32,45 @@ export function formatDuration(duration: string | undefined): string {
 // Convert decimal to fraction for common measurements
 export function formatAmount(amount: string | number): string {
   console.log("formatting", amount)
+
+  let unit = '';
+  let numericValue: number;
+
   if (typeof amount === 'string') {
     // Clean up the string first
     amount = amount.trim();
 
-    // If it's already a string with fractions or units, return as-is
-    if (amount.includes('/') || !amount.match(/^[\d.]+$/)) {
+    // If it already contains fractions, return as-is
+    if (amount.includes('/')) {
       return amount;
     }
+
+    // Extract numeric part and unit using regex
+    const match = amount.match(/^([\d.]+)\s*(.*)$/);
+    if (match) {
+      numericValue = parseFloat(match[1]);
+      unit = match[2].trim();
+    } else {
+      // If no numeric part found, return original
+      return amount;
+    }
+  } else {
+    numericValue = amount;
   }
 
-  const num = typeof amount === 'number' ? amount : parseFloat(amount);
-
-
   // Handle NaN or invalid numbers
-  if (isNaN(num)) {
+  if (isNaN(numericValue)) {
     return typeof amount === 'string' ? amount : '0';
   }
 
+  console.log("moving with", numericValue)
 
-
-  console.log("moving with", num)
   // Check if it's a whole number
-  // if (Number.isInteger(num)) {
-  if (num % 1 === 0) {
-    console.log(num, "whole")
-    return num.toString();
+  if (numericValue % 1 === 0) {
+    console.log(numericValue, "whole")
+    const result = numericValue.toString();
+    return unit ? `${result} ${unit}` : result;
   }
-
-
 
   // Common fractions used in cooking (defined as numerator/denominator pairs)
   const fractions: Array<[number, number, string]> = [
@@ -75,33 +85,36 @@ export function formatAmount(amount: string | number): string {
     [7, 8, '7/8']
   ];
 
-
   // Check for mixed numbers (e.g., 1.5 = 1 1/2)
-  const wholePart = Math.floor(num);
-  const decimalPart = num - wholePart;
+  const wholePart = Math.floor(numericValue);
+  const decimalPart = numericValue - wholePart;
 
   // Look for closest fraction match
-  // Use the actual mathematical fraction to compare, not hardcoded decimals
   for (const [numerator, denominator, display] of fractions) {
     const fractionValue = numerator / denominator;
     // Use a reasonable tolerance for floating point comparison
-    // This will catch any representation of the fraction (e.g., 0.666666... for 2/3)
     if (Math.abs(decimalPart - fractionValue) < 0.01) {
-      return wholePart > 0 ? `${wholePart} ${display}` : display;
+      const result = wholePart > 0 ? `${wholePart} ${display}` : display;
+      return unit ? `${result} ${unit}` : result;
     }
     // Also check the full number for cases where it's less than 1
-    if (wholePart === 0 && Math.abs(num - fractionValue) < 0.01) {
-      return display;
+    if (wholePart === 0 && Math.abs(numericValue - fractionValue) < 0.01) {
+      return unit ? `${display} ${unit}` : display;
     }
   }
 
   // For very small decimals, round to 2 decimal places
-  if (num < 1) {
-    const rounded = Math.round(num * 100) / 100;
-    if (rounded === 0) return '0';
-    return rounded.toString();
+  if (numericValue < 1) {
+    const rounded = Math.round(numericValue * 100) / 100;
+    if (rounded === 0) {
+      return unit ? `0 ${unit}` : '0';
+    }
+    const result = rounded.toString();
+    return unit ? `${result} ${unit}` : result;
   }
 
   // Round to 2 decimal places if no fraction match
-  return num.toFixed(2).replace(/\.00$/, '');
+  const result = numericValue.toFixed(2).replace(/\.00$/, '');
+  return unit ? `${result} ${unit}` : result;
 }
+
