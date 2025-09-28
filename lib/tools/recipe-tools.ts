@@ -215,6 +215,18 @@ function extractJsonLdRecipe(html: string): any | null {
   return null;
 }
 
+function formatDuration(isoDuration?: string): string | undefined {
+  if (!isoDuration) return undefined;
+
+  const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+
+  if (!match) return isoDuration; // fallback
+
+  const hours = match[1] ? `${match[1]}h` : "";
+  const minutes = match[2] ? `${match[2]}m` : "";
+
+  return `${hours} ${minutes}`.trim();
+}
 // Helper to parse recipe instructions
 function parseInstructions(instructions: any): string[] {
   if (!instructions) return [];
@@ -328,9 +340,10 @@ export const recipeExtractionTool = tool({
           description: jsonLdRecipe.description || "",
           ingredients: parseIngredients(jsonLdRecipe.recipeIngredient),
           instructions: parseInstructions(jsonLdRecipe.recipeInstructions),
-          prepTime: jsonLdRecipe.prepTime || undefined,
-          cookTime: jsonLdRecipe.cookTime || undefined,
-          totalTime: jsonLdRecipe.totalTime || undefined,
+          prepTime: formatDuration(jsonLdRecipe.prepTime),
+          cookTime: formatDuration(jsonLdRecipe.cookTime),
+          totalTime: formatDuration(jsonLdRecipe.totalTime),
+
           servings: jsonLdRecipe.recipeYield
             ? typeof jsonLdRecipe.recipeYield === "number"
               ? jsonLdRecipe.recipeYield
