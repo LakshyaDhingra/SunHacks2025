@@ -1,13 +1,14 @@
 import Image from "next/image";
+import newLogo from "@/app/assets/logo_svg.svg";
 
 export function Logo() {
   return (
-    <div className="flex justify-center -mt-15">
+    <div className="flex justify-center -mt-10">
       <Image
-        src="/sparkbite-logo.svg"
+        src={newLogo}
         alt="SparkBite Logo"
-        width={600} // adjust as needed
-        height={620}
+        width={500} // adjust as needed
+        height={200}
         priority
       />
     </div>
