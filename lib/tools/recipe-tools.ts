@@ -3,17 +3,16 @@ import { z } from 'zod';
 import { Recipe, RecipeSearchResult } from '@/lib/types/recipe';
 import * as cheerio from 'cheerio';
 
-// Function to search Google for recipes
-async function searchGoogleForRecipes(
+// Function to search for recipes across the web
+async function searchWebForRecipes(
   ingredients: string[], 
   query?: string, 
-  limit: number = 5
+  limit: number = 10
 ): Promise<RecipeSearchResult[]> {
-  // Build a search query targeting recipe sites with schema.org markup
-  const searchQuery = `recipe ${ingredients.join(' ')} ${query || ''} (site:allrecipes.com OR site:foodnetwork.com OR site:bbcgoodfood.com OR site:seriouseats.com OR site:tasty.co OR site:simplyrecipes.com OR site:bonappetit.com)`;
+  // Build an open search query for any recipe site
+  const searchQuery = `recipe ${ingredients.join(' ')} ${query || ''}`;
   
-  // For now, we'll use DuckDuckGo's HTML search as it doesn't require API keys
-  // In production, you'd want to use Google Custom Search API or Serper API
+  // Use DuckDuckGo's HTML search (no API key required)
   const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(searchQuery)}`;
   
   try {
@@ -58,61 +57,11 @@ async function searchGoogleForRecipes(
       }
     });
     
-    // If no results from search, return curated fallback
-    if (results.length === 0) {
-      return getCuratedRecipes(ingredients, limit);
-    }
-    
     return results;
   } catch (error) {
     console.error('Search error:', error);
-    // Fallback to curated recipes
-    return getCuratedRecipes(ingredients, limit);
+    return [];
   }
-}
-
-// Curated fallback recipes based on common ingredients
-function getCuratedRecipes(ingredients: string[], limit: number): RecipeSearchResult[] {
-  const allRecipes: RecipeSearchResult[] = [
-    {
-      title: "Easy Chicken Stir-Fry",
-      url: "https://www.allrecipes.com/recipe/223382/chicken-stir-fry/",
-      snippet: "Quick and easy chicken stir-fry with vegetables in a savory sauce",
-      source: "AllRecipes"
-    },
-    {
-      title: "One-Pan Baked Chicken and Vegetables",
-      url: "https://www.foodnetwork.com/recipes/food-network-kitchen/one-pan-baked-chicken-and-vegetables",
-      snippet: "A complete meal with juicy chicken and roasted vegetables",
-      source: "Food Network"
-    },
-    {
-      title: "Simple Pasta Primavera",
-      url: "https://www.simplyrecipes.com/recipes/pasta_primavera/",
-      snippet: "Fresh seasonal vegetables with pasta in a light sauce",
-      source: "Simply Recipes"
-    },
-    {
-      title: "Ground Beef Tacos",
-      url: "https://www.seriouseats.com/ground-beef-tacos-recipe",
-      snippet: "Classic beef tacos with homemade seasoning",
-      source: "Serious Eats"
-    },
-    {
-      title: "Vegetable Fried Rice",
-      url: "https://www.bbcgoodfood.com/recipes/egg-fried-rice",
-      snippet: "Quick fried rice with eggs and mixed vegetables",
-      source: "BBC Good Food"
-    }
-  ];
-  
-  // Filter based on ingredients mentioned
-  const filtered = allRecipes.filter(recipe => {
-    const text = `${recipe.title} ${recipe.snippet}`.toLowerCase();
-    return ingredients.some(ing => text.includes(ing.toLowerCase()));
-  });
-  
-  return (filtered.length > 0 ? filtered : allRecipes).slice(0, limit);
 }
 
 // Enhanced Recipe Search Tool with real web search
@@ -121,11 +70,53 @@ export const recipeSearchTool = tool({
   inputSchema: z.object({
     ingredients: z.array(z.string()).describe('List of available ingredients'),
     query: z.string().optional().describe('Additional search parameters like cuisine type or dietary restrictions'),
-    limit: z.number().optional().default(5).describe('Number of results to return')
+    limit: z.number().optional().default(10).describe('Number of results to return')
   }),
-  execute: async ({ ingredients, query, limit = 5 }) => {
+  execute: async ({ ingredients, query, limit = 10 }) => {
     try {
-      const results = await searchGoogleForRecipes(ingredients, query, limit);
+      const searchResults = await searchWebForRecipes(ingredients, query, limit * 2); // Get extra to filter
+      
+      // Try to extract recipes with schema.org data
+      const validRecipes: RecipeSearchResult[] = [];
+      
+      for (const result of searchResults) {
+        try {
+          // Quick check if the URL might have recipe schema
+          const response = await fetch(result.url, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
+            signal: AbortSignal.timeout(5000) // 5 second timeout
+          });
+          
+          if (response.ok) {
+            const html = await response.text();
+            const hasRecipeSchema = html.includes('"@type":"Recipe"') || 
+                                   html.includes('"@type":["Recipe"') ||
+                                   html.includes('application/ld+json');
+            
+            if (hasRecipeSchema) {
+              validRecipes.push(result);
+              if (validRecipes.length >= limit) break;
+            }
+          }
+        } catch (error) {
+          // Skip this URL if we can't check it
+          console.log(`Skipping ${result.url}: ${error}`);
+        }
+      }
+      
+      // If we didn't find enough with schema, include some without
+      if (validRecipes.length < limit) {
+        for (const result of searchResults) {
+          if (!validRecipes.find(r => r.url === result.url)) {
+            validRecipes.push(result);
+            if (validRecipes.length >= limit) break;
+          }
+        }
+      }
+      
+      const results = validRecipes.slice(0, limit);
       
       return {
         success: true,
@@ -276,14 +267,9 @@ export const recipeExtractionTool = tool({
           }
         }
         
-        // Skip recipes without images
+        // Continue even if no image (don't skip recipes)
         if (!imageUrl) {
-          console.log('Skipping recipe without image');
-          return {
-            success: false,
-            error: 'Recipe has no image',
-            recipe: null
-          };
+          console.log('Recipe has no image, continuing anyway');
         }
         
         const recipe: Recipe = {
@@ -360,132 +346,11 @@ export const recipeExtractionTool = tool({
         };
       }
       
-      // Last resort: return a mock recipe based on URL patterns
-      let mockRecipe: Recipe;
-
-      if (url.includes('chicken') || url.includes('stir-fry')) {
-        mockRecipe = {
-          name: "Simple Chicken Stir-Fry",
-          url: url,
-          image: "https://www.allrecipes.com/thmb/chicken-stirfry.jpg",
-          description: "A quick and healthy chicken stir-fry that's perfect for busy weeknights",
-          ingredients: [
-            { name: "Boneless chicken breast", amount: "1 lb" },
-            { name: "Mixed vegetables", amount: "2 cups" },
-            { name: "Soy sauce", amount: "3 tbsp" },
-            { name: "Garlic", amount: "3 cloves" },
-            { name: "Ginger", amount: "1 tbsp" },
-            { name: "Sesame oil", amount: "1 tbsp" },
-            { name: "Cornstarch", amount: "1 tbsp" },
-            { name: "Rice", amount: "2 cups cooked" }
-          ],
-          instructions: [
-            "Cut chicken into bite-sized pieces and season with salt and pepper",
-            "Heat oil in a large wok or skillet over high heat",
-            "Add chicken and cook until golden, about 5 minutes",
-            "Add garlic and ginger, stir-fry for 30 seconds",
-            "Add vegetables and stir-fry for 3-4 minutes",
-            "Mix soy sauce with cornstarch and add to the pan",
-            "Toss everything together until sauce thickens",
-            "Serve immediately over rice"
-          ],
-          prepTime: "15 minutes",
-          cookTime: "15 minutes",
-          totalTime: "30 minutes",
-          servings: 4,
-          nutrition: {
-            calories: "320",
-            protein: "28g",
-            carbohydrates: "35g",
-            fat: "8g"
-          },
-          author: "Chef John",
-          datePublished: "2024-01-15"
-        };
-      } else if (url.includes('pasta') || url.includes('primavera')) {
-        mockRecipe = {
-          name: "One-Pot Pasta Primavera",
-          url: url,
-          image: "https://www.foodnetwork.com/content/dam/images/pasta-primavera.jpg",
-          description: "A vibrant, veggie-packed pasta dish that comes together in one pot",
-          ingredients: [
-            { name: "Penne pasta", amount: "12 oz" },
-            { name: "Cherry tomatoes", amount: "2 cups" },
-            { name: "Zucchini", amount: "1 medium" },
-            { name: "Bell pepper", amount: "1 large" },
-            { name: "Garlic", amount: "4 cloves" },
-            { name: "Vegetable broth", amount: "4 cups" },
-            { name: "Fresh basil", amount: "1/2 cup" },
-            { name: "Parmesan cheese", amount: "1/2 cup" },
-            { name: "Olive oil", amount: "3 tbsp" }
-          ],
-          instructions: [
-            "Add pasta, tomatoes, zucchini, bell pepper, and garlic to a large pot",
-            "Pour vegetable broth over the ingredients",
-            "Bring to a boil over high heat",
-            "Once boiling, reduce heat and simmer for 10-12 minutes",
-            "Stir frequently to prevent sticking",
-            "Once pasta is tender and liquid has reduced, remove from heat",
-            "Stir in basil, Parmesan, and olive oil",
-            "Season with salt and pepper to taste",
-            "Serve immediately with extra Parmesan"
-          ],
-          prepTime: "10 minutes",
-          cookTime: "15 minutes",
-          totalTime: "25 minutes",
-          servings: 6,
-          nutrition: {
-            calories: "280",
-            protein: "10g",
-            carbohydrates: "48g",
-            fat: "7g"
-          },
-          author: "Giada De Laurentiis"
-        };
-      } else {
-        mockRecipe = {
-          name: "Classic Beef Tacos",
-          url: url,
-          image: "https://www.seriouseats.com/thmb/beef-tacos.jpg",
-          description: "Authentic Mexican-style beef tacos with all the fixings",
-          ingredients: [
-            { name: "Ground beef", amount: "1 lb" },
-            { name: "Corn tortillas", amount: "12 small" },
-            { name: "Onion", amount: "1 medium" },
-            { name: "Cilantro", amount: "1/2 cup" },
-            { name: "Lime", amount: "2" },
-            { name: "Cumin", amount: "1 tsp" },
-            { name: "Chili powder", amount: "1 tbsp" },
-            { name: "Garlic powder", amount: "1 tsp" },
-            { name: "Salt and pepper", amount: "to taste" }
-          ],
-          instructions: [
-            "Brown ground beef in a large skillet over medium-high heat",
-            "Add cumin, chili powder, garlic powder, salt, and pepper",
-            "Cook until beef is fully cooked and spices are fragrant",
-            "Warm tortillas in a dry pan or microwave",
-            "Dice onion and chop cilantro",
-            "Fill each tortilla with seasoned beef",
-            "Top with onion and cilantro",
-            "Serve with lime wedges"
-          ],
-          prepTime: "10 minutes",
-          cookTime: "15 minutes",
-          totalTime: "25 minutes",
-          servings: 4,
-          nutrition: {
-            calories: "350",
-            protein: "22g",
-            carbohydrates: "28g",
-            fat: "16g"
-          }
-        };
-      }
-
+      // No recipe data found
       return {
-        success: true,
-        recipe: mockRecipe,
-        extractionMethod: 'fallback-mock'
+        success: false,
+        error: 'No recipe data found on this page',
+        recipe: null
       };
     } catch (error) {
       console.error('Error extracting recipe:', error);
