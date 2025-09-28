@@ -1,5 +1,48 @@
 import { Recipe } from '@/lib/types/recipe';
 
+// Identify the first complete JSON array in the streamed text
+function findCompleteJsonArray(text: string): string | null {
+  const start = text.indexOf('[');
+  if (start === -1) {
+    return null;
+  }
+
+  let inString = false;
+  let escaped = false;
+  let depth = 0;
+
+  for (let i = start; i < text.length; i++) {
+    const char = text[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (char === '[') {
+      depth++;
+    } else if (char === ']') {
+      depth--;
+      if (depth === 0) {
+        return text.slice(start, i + 1);
+      }
+    }
+  }
+
+  return null;
+}
+
 export function parseRecipesFromMarkdown(text: string): Recipe[] {
   const recipes: Recipe[] = [];
 
@@ -135,48 +178,39 @@ export function parseStreamedRecipeResponse(text: string): {
   let recipes: Recipe[] = [];
   let hasCompleteJson = false;
   
-  // Only try to parse if we likely have complete JSON
-  // Check for closing bracket and that we have some content
-  if (recipesText.length > 2 && recipesText.includes(']')) {
-    // Find the last closing bracket (end of JSON array)
-    const lastBracketIndex = recipesText.lastIndexOf(']');
-    const jsonCandidate = recipesText.substring(0, lastBracketIndex + 1).trim();
-    
+  const jsonCandidate = findCompleteJsonArray(recipesText);
+
+  if (jsonCandidate) {
     try {
-      // Parse only the complete JSON portion
       const parsed = JSON.parse(jsonCandidate);
-      console.log('Parsed JSON:', parsed);
-      
+
       if (Array.isArray(parsed)) {
-        recipes = parsed.filter(item => {
-          // Check various possible structures
-          if (!item || typeof item !== 'object') return false;
-          
-          // Handle nested recipe structure
-          if (item.recipe && typeof item.recipe === 'object') {
-            return true;
-          }
-          
-          // Handle direct recipe structure
-          if (item.name || item.title) {
-            return true;
-          }
-          
-          return false;
-        }).map(item => {
-          // Extract the actual recipe object
-          if (item.recipe && typeof item.recipe === 'object') {
-            return item.recipe;
-          }
-          return item;
-        });
-        
-        console.log(`Found ${recipes.length} recipes after filtering`);
+        recipes = parsed
+          .filter(item => {
+            if (!item || typeof item !== 'object') return false;
+
+            if (item.recipe && typeof item.recipe === 'object') {
+              return true;
+            }
+
+            if (item.name || item.title) {
+              return true;
+            }
+
+            return false;
+          })
+          .map(item => {
+            if (item.recipe && typeof item.recipe === 'object') {
+              return item.recipe;
+            }
+            return item;
+          });
+
         hasCompleteJson = true;
       }
     } catch (error) {
       console.error('Error parsing recipe JSON:', error);
-      console.log('JSON candidate was:', jsonCandidate.substring(0, 200));
+      console.log('JSON candidate snippet:', jsonCandidate.substring(0, 200));
     }
   }
   
