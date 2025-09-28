@@ -14,11 +14,26 @@ export function RecipeFinder() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [statusMessage, setStatusMessage] = useState("");
 
+  // Parse only when punctuation delimiters are present: comma, semicolon, period, newline, or spaced hyphen (" - ").
+  // If none are present, treat the whole input as a single ingredient (spaces preserved).
+  const parseIngredients = (input: string): string[] => {
+    const normalized = input.replace(/[–—]/g, "-").trim();
+    if (!normalized) return [];
+    const hasDelims = /[,;.\n]|\s-\s/.test(normalized);
+    if (!hasDelims) return [normalized];
+    const raw = normalized.split(/(?:[,;.\n]|\s-\s)+/g);
+    return raw.map((t) => t.trim()).filter((t) => t.length > 0);
+  };
+
   const addIngredient = () => {
-    if (currentIngredient.trim()) {
-      setIngredients([...ingredients, currentIngredient.trim()]);
-      setCurrentIngredient("");
-    }
+    const tokens = parseIngredients(currentIngredient);
+    if (tokens.length === 0) return;
+    setIngredients((prev) => {
+      const existing = new Set(prev.map((i) => i.toLowerCase()));
+      const additions = tokens.filter((t) => !existing.has(t.toLowerCase()));
+      return [...prev, ...additions];
+    });
+    setCurrentIngredient("");
   };
 
   const removeIngredient = (index: number) => {
