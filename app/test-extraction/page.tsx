@@ -1,47 +1,49 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { RecipeCard } from '@/components/RecipeCard';
-import { Recipe } from '@/lib/types/recipe';
+import { useState } from "react";
+import { RecipeCard } from "@/components/RecipeCard";
+import { Recipe } from "@/lib/types/recipe";
 
 export default function TestExtractionPage() {
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [recipe, setRecipe] = useState<Recipe | null>(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [debugInfo, setDebugInfo] = useState<any>(null);
 
   const extractRecipe = async () => {
     if (!url.trim()) return;
 
     setIsLoading(true);
-    setError('');
+    setError("");
     setRecipe(null);
     setDebugInfo(null);
 
     try {
-      const response = await fetch('/api/recipes/extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/recipes/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to extract recipe');
+        throw new Error(data.error || "Failed to extract recipe");
       }
 
       if (data.success && data.recipe) {
         setRecipe(data.recipe);
         setDebugInfo(data.debug);
       } else {
-        setError('No recipe data found on this page');
+        setError("No recipe data found on this page");
         setDebugInfo(data.debug);
       }
     } catch (error) {
-      console.error('Error:', error);
-      setError(error instanceof Error ? error.message : 'Failed to extract recipe');
+      console.error("Error:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to extract recipe"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -49,8 +51,8 @@ export default function TestExtractionPage() {
 
   // Sample URLs for testing
   const sampleUrls = [
-    'https://www.allrecipes.com/recipe/23298/egg-fried-rice/',
-    'https://www.allrecipes.com/recipe/223382/chicken-stir-fry/',
+    "https://www.allrecipes.com/recipe/23298/egg-fried-rice/",
+    "https://www.allrecipes.com/recipe/223382/chicken-stir-fry/",
   ];
 
   return (
@@ -74,7 +76,7 @@ export default function TestExtractionPage() {
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && extractRecipe()}
+              onKeyDown={(e) => e.key === "Enter" && extractRecipe()}
               placeholder="https://www.example.com/recipe"
               className="flex-1 px-4 py-3 border-2 border-zinc-200 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white focus:outline-none focus:border-green-500 transition-colors"
             />
@@ -83,13 +85,15 @@ export default function TestExtractionPage() {
               disabled={!url.trim() || isLoading}
               className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:bg-gray-400"
             >
-              {isLoading ? 'Extracting...' : 'Extract'}
+              {isLoading ? "Extracting..." : "Extract"}
             </button>
           </div>
 
           {/* Sample URLs */}
           <div className="mb-4">
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Try these sample URLs:</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
+              Try these sample URLs:
+            </p>
             <div className="flex flex-wrap gap-2">
               {sampleUrls.map((sampleUrl, index) => (
                 <button
@@ -113,9 +117,25 @@ export default function TestExtractionPage() {
           {/* Loading State */}
           {isLoading && (
             <div className="flex items-center justify-center py-8">
-              <svg className="animate-spin h-8 w-8 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="animate-spin h-8 w-8 text-green-600"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
             </div>
           )}
@@ -124,9 +144,14 @@ export default function TestExtractionPage() {
         {/* Debug Info */}
         {debugInfo && (
           <div className="bg-zinc-100 dark:bg-zinc-900 rounded-lg p-4 mb-6">
-            <h3 className="font-bold text-zinc-900 dark:text-white mb-2">Debug Info</h3>
+            <h3 className="font-bold text-zinc-900 dark:text-white mb-2">
+              Debug Info
+            </h3>
             <div className="text-sm text-zinc-600 dark:text-zinc-400 space-y-1">
-              <p>Extraction Method: {debugInfo.foundJsonLd ? 'schema.org JSON-LD' : 'HTML parsing'}</p>
+              <p>
+                Extraction Method:{" "}
+                {debugInfo.foundJsonLd ? "schema.org JSON-LD" : "HTML parsing"}
+              </p>
               {debugInfo.ingredientsFound !== undefined && (
                 <p>Ingredients Found: {debugInfo.ingredientsFound}</p>
               )}
@@ -154,7 +179,7 @@ export default function TestExtractionPage() {
               📖 Extracted Recipe
             </h2>
             <div className="max-w-2xl mx-auto">
-              <RecipeCard recipe={recipe} />
+              <RecipeCard recipe={recipe} userIngredients={[]} />
             </div>
           </div>
         )}
