@@ -195,7 +195,7 @@ export function RecipeFinder() {
           </div>
         ) : (
           <p className="text-zinc-600 dark:text-zinc-300 mb-6 flex justify-center">
-            Add ingredients using the search above, then find recipes.
+            Add ingredients&nbsp;<span className="font-bold">in any language</span> &nbsp;using the search above, then find recipes.
           </p>
         )}
 

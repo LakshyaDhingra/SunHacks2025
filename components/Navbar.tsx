@@ -30,8 +30,8 @@ export default function NavBar() {
         items={[
           { label: 'Home', href: '/' },
           { label: 'Recipes', href: '/recipes' },
-          { label: 'Test', href: '/test-extraction' },
-          { label: 'About', href: '/about' }
+          // { label: 'Test', href: '/test-extraction' },
+          // { label: 'About', href: '/about' }
         ]}
         className="hidden md:flex"
       />

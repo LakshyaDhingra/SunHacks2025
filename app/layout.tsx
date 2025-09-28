@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Afacad } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs"
 import { dark } from "@clerk/themes";
+import NavBar from "@/components/Navbar";
 
 const afacad = Afacad({
   variable: "--font-afacad",
@@ -62,6 +63,7 @@ export default function RootLayout({
         <body
           className={`${afacad.className} ${afacad.variable} antialiased bg-background text-foreground`}
         >
+          <NavBar />
           {children}
         </body>
       </html>

@@ -5,6 +5,8 @@ import { Recipe } from "@/lib/types/recipe";
 import { formatDuration, formatAmount } from "@/lib/utils/format";
 import { TimerConfirm } from "./TimerConfirm";
 import { InlineTimer } from "./InlineTimer";
+import { FaRegHeart, FaHeart } from "react-icons/fa";
+import { useUser } from "@clerk/nextjs";
 
 interface ActiveTimer {
   key: string;
@@ -15,6 +17,7 @@ interface ActiveTimer {
 interface RecipeCardProps {
   recipe: Recipe;
   userIngredients: string[];
+  onRemoveFavorite?: () => void; // Added optional onRemoveFavorite prop
 }
 
 export function RecipeCard({ recipe, userIngredients }: RecipeCardProps) {
@@ -25,6 +28,37 @@ export function RecipeCard({ recipe, userIngredients }: RecipeCardProps) {
     key: string;
   } | null>(null);
   const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
+
+  const { user } = useUser();
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isBecomingFavorite, setIsBecomingFavorite] = useState(false);
+
+  const toggleFavorite = async () => {
+    console.log(`Toggling favorite for recipe: ${isBecomingFavorite}`);
+    if (!user || isBecomingFavorite) return;
+    
+    setIsBecomingFavorite(true);
+    
+    try {
+      const response = await fetch('/api/favorites', {
+        method: isFavorite ? 'DELETE' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          isFavorite
+            ? { recipeName: recipe.name, recipeUrl: recipe.url }
+            : recipe
+        ),
+      });
+      
+      if (response.ok) {
+        setIsFavorite(!isFavorite);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    } finally {
+      setIsBecomingFavorite(false);
+    }
+  };
 
   const handleTimerClick = (duration: string, label: string, key: string) => {
     const existingTimer = activeTimers.find((t) => t.key === key);
@@ -130,8 +164,17 @@ export function RecipeCard({ recipe, userIngredients }: RecipeCardProps) {
     return parts.length > 0 ? parts : instruction;
   };
 
+
   return (
-    <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow">
+    <div className="relative bg-white dark:bg-zinc-800 rounded-xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow">
+      <button onClick={toggleFavorite} className="absolute top-4 right-4 z-10 p-3 bg-white rounded-full cursor-pointer shadow-lg hover:shadow-2xl transition-shadow">
+        {isFavorite ? (
+          <FaHeart className="text-red-600 dark:text-red-400" />
+        ) : (
+          <FaRegHeart className="text-zinc-600 dark:text-zinc-400" />
+        )}
+      </button>
+
       {recipe.image && (
         <div className="relative h-48 bg-gradient-to-br">
           <img
