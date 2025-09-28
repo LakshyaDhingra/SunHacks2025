@@ -33,6 +33,21 @@ export function RecipeCard({ recipe, userIngredients }: RecipeCardProps) {
     setPendingTimer({ duration, label, key });
     setConfirmOpen(true);
   };
+  function formatDuration(duration?: string): string {
+    if (!duration) return "";
+
+    // Match things like P0Y0M0DT0H15M0.000S or PT15M
+    const match = duration.match(
+      /P(?:\d+Y)?(?:\d+M)?(?:\d+D)?T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/
+    );
+    if (!match) return duration;
+
+    const hours = match[1] && match[1] !== "0" ? `${match[1]}h ` : "";
+    const minutes = match[2] && match[2] !== "0" ? `${match[2]}m ` : "";
+    const seconds = match[3] && match[3] !== "0" ? `${match[3]}s` : "";
+
+    return (hours + minutes + seconds).trim() || duration;
+  }
 
   const handleStartTimer = (adjustedDuration: string) => {
     if (pendingTimer) {

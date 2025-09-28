@@ -3,11 +3,10 @@
 import { useState } from "react";
 import Image from "next/image";
 
-export function Navbar() {
-  const [user, setUser] = useState<{ name: string; avatar: string } | null>({
-    name: "Lakshya",
-    avatar: "/avatar.png", // put a file in /public
-  });
+export default function NavBar() {
+  const [user, setUser] = useState<{ name: string; avatar: string } | null>(
+    null
+  );
 
   return (
     <nav className="w-full bg-gradient-to-r from-maroon-500 to-yellow-600 px-6 py-4 shadow-md flex items-center justify-between">
@@ -39,7 +38,7 @@ export function Navbar() {
           <button
             onClick={() =>
               setUser({
-                name: "Lakshya",
+                name: "User1",
                 avatar: "/avatar.png",
               })
             }
