@@ -31,3 +31,14 @@ body {
 }
 
 .placeholder-muted::placeholder { color: var(--muted); }
+
+@keyframes blur-pulse {
+  0%, 100% {
+    backdrop-filter: blur(1px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+  50% {
+    backdrop-filter: blur(3px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 213, 109, 0.4);
+  }
+}
