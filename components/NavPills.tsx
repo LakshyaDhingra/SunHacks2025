@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import './NavPills.css';
+import '../app/css/NavPills.css';
 
 export type NavPillItem = {
   label: string;

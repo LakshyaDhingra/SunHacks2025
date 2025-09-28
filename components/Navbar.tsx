@@ -5,6 +5,13 @@ import Image from "next/image";
 import { SignUpButton } from "@clerk/nextjs";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 import NavPills from "./NavPills";
+import { Afacad } from "next/font/google";
+
+const afacad = Afacad({
+  variable: "--font-afacad",
+  subsets: ["latin"],
+  // weight: ["400", "700"]
+});
 
 export default function NavBar() {
 
@@ -19,7 +26,7 @@ export default function NavBar() {
       </div>
 
       {/* Center: Navigation Pills */}
-      <NavPills
+      <NavPills   
         items={[
           { label: 'Home', href: '/' },
           { label: 'Recipes', href: '/recipes' },

@@ -1,8 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Afacad } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs"
 import { dark } from "@clerk/themes";
+
+const afacad = Afacad({
+  variable: "--font-afacad",
+  subsets: ["latin"],
+  // weight: ["400", "700"]
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -54,7 +60,7 @@ export default function RootLayout({
     localization={localization}>
       <html lang="en">
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+          className={`${afacad.className} ${afacad.variable} antialiased bg-background text-foreground`}
         >
           {children}
         </body>

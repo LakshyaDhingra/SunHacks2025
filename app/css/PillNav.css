@@ -96,7 +96,7 @@
   border-radius: 9999px;
   box-sizing: border-box;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 0;
   text-transform: uppercase;
   letter-spacing: 0.2px;
@@ -266,7 +266,7 @@
   color: var(--pill-text, #fff);
   background-color: var(--pill-bg, #fff);
   text-decoration: none;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   border-radius: 50px;
   transition: all 0.2s ease;

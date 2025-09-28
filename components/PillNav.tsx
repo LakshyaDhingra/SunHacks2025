@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import './PillNav.css';
+import '../app/css/PillNav.css';
 
 export type PillNavItem = {
   label: string;
