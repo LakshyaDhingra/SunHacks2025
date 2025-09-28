@@ -22,7 +22,7 @@ export default function FavoritesPage() {
 
   const fetchFavorites = async () => {
     try {
-      const response = await fetch("/api/bookmarks");
+      const response = await fetch("/api/favorites");
       
       if (!response.ok) {
         throw new Error("Failed to fetch favorites");
@@ -32,7 +32,7 @@ export default function FavoritesPage() {
       setFavorites(data);
     } catch (error) {
       console.error("Error fetching favorites:", error);
-      setError("Failed to load your favorite recipes");
+      setError("Make sure to add some favs first!");
     } finally {
       setIsLoading(false);
     }
