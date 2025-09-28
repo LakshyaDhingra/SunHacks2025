@@ -5,6 +5,7 @@ import { RecipeCard } from "./RecipeCard";
 import { Recipe } from "@/lib/types/recipe";
 import { parseStreamedRecipeResponse } from "@/lib/utils/recipe-parser";
 import { Logo } from "./Logo";
+import { useEffect } from "react";
 
 export function RecipeFinder() {
   const [ingredients, setIngredients] = useState<string[]>([]);
@@ -13,6 +14,15 @@ export function RecipeFinder() {
   const [streamedContent, setStreamedContent] = useState("");
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [statusMessage, setStatusMessage] = useState("");
+
+  useEffect(() => {
+    if (statusMessage && recipes.length > 0) {
+      const timer = setTimeout(() => {
+        setStatusMessage("");
+      }, 3000); // hide after 3s
+      return () => clearTimeout(timer);
+    }
+  }, [statusMessage, recipes]);
 
   const addIngredient = () => {
     if (currentIngredient.trim()) {
@@ -101,7 +111,7 @@ export function RecipeFinder() {
                 value={currentIngredient}
                 onChange={(e) => setCurrentIngredient(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && addIngredient()}
-                placeholder="Select your ingredients"
+                placeholder="What's there in your fridge?"
                 className="w-full rounded-full bg-[color:var(--surface)] text-[#2E2A1F] placeholder-muted px-6 py-4 shadow-sm focus:outline-none focus:ring-4 focus:ring-[color:var(--brand)]/40"
               />
               {/* Add Ingredient Button */}
@@ -113,26 +123,44 @@ export function RecipeFinder() {
               </button>
             </div>
 
-            {/* Find Recipes Button */}
-            <div className='relative w-full bg-[color:var(--surface)] flex-1 rounded-full'>
-              <button onClick={findRecipes} className='absolute w-93/100 right-2 top-1/2 -translate-y-1/2 rounded-full bg-[color:var(--brand)] text-[#2E2A1F] font-semibold px-5 py-2 shadow-sm hover:cursor-pointer transition hover:bg-[color:var(--brand_dark)]'>
+            {/* Find Quick Recipes Button */}
+            <div className="relative w-full bg-[color:var(--surface)] flex-1 rounded-full">
+              <button
+                onClick={findRecipes}
+                className="absolute w-93/100 right-2 top-1/2 -translate-y-1/2 rounded-full bg-[color:var(--brand)] text-[#2E2A1F] font-semibold px-5 py-2 shadow-sm hover:cursor-pointer transition hover:bg-[color:var(--brand_dark)]"
+              >
                 {isLoading ? (
                   <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Finding Recipes...
                   </span>
                 ) : (
-                  '🔍 Find Recipes'
+                  "🔍 Find Quick Recipes"
                 )}
               </button>
             </div>
           </div>
         </div>
 
-        
         {ingredients.length > 0 ? (
           <div className="flex flex-wrap gap-2 mb-6">
             {ingredients.map((ingredient, index) => (
@@ -151,7 +179,9 @@ export function RecipeFinder() {
             ))}
           </div>
         ) : (
-          <p className="text-zinc-600 dark:text-zinc-300 mb-6 flex justify-center">Add ingredients using the search above, then find recipes.</p>
+          <p className="text-zinc-600 dark:text-zinc-300 mb-6 flex justify-center">
+            Add ingredients using the search above, then find recipes.
+          </p>
         )}
 
         {/* Status Bar */}
@@ -197,7 +227,11 @@ export function RecipeFinder() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {recipes.map((recipe, index) => (
-                <RecipeCard key={index} recipe={recipe} />
+                <RecipeCard
+                  key={index}
+                  recipe={recipe}
+                  userIngredients={ingredients}
+                />
               ))}
             </div>
           </div>
