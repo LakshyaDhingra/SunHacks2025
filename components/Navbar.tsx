@@ -21,7 +21,7 @@ export default function NavBar() {
       backdropFilter: 'blur(2px)'
     }}>
       {/* Left side: Brand */}
-      <div className="text-2xl font-bold text-white">
+      <div className="text-2xl font-bold text-white logo-container">
         <Image src="/logo_svg.svg" alt="Logo" width={100} height={100} />
       </div>
 
