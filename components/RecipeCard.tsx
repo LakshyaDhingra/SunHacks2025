@@ -118,7 +118,7 @@ export function RecipeCard({ recipe, userIngredients }: RecipeCardProps) {
   return (
     <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow">
       {recipe.image && (
-        <div className="relative h-48 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900">
+        <div className="relative h-48 bg-gradient-to-br">
           <img
             src={recipe.image}
             alt={recipe.name}
@@ -225,7 +225,7 @@ export function RecipeCard({ recipe, userIngredients }: RecipeCardProps) {
                 key={index}
                 className="text-sm text-zinc-600 dark:text-zinc-400 flex"
               >
-                <span className="font-bold text-green-600 dark:text-green-400 mr-2">
+                <span className="font-bold text-[color:var(--brand)] dark:text-[color:var(--brand)] mr-2">
                   {index + 1}.
                 </span>
                 <span>{renderInstructionWithTimers(step, index)}</span>
@@ -239,7 +239,7 @@ export function RecipeCard({ recipe, userIngredients }: RecipeCardProps) {
             href={recipe.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all text-sm font-medium"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r dark:from-[color:var(--brand)] dark:to-[color:var(--brand_dark)] text-[#2E2A1F] rounded-lg transition hover:from-yellow-500 hover:to-yellow-600 text-sm font-medium"
           >
             View Full Recipe
             <svg
