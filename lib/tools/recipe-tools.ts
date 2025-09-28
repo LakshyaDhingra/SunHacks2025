@@ -216,15 +216,18 @@ function parseIngredients(ingredients: any): { name: string; amount: string }[] 
   
   return ingredients.map((ing: any) => {
     if (typeof ing === 'string') {
-      // Try to parse amount from string (e.g., "2 cups flour")
-      const match = ing.match(/^([\d\/\s]+\w*)?\s*(.+)$/);
+      // More sophisticated regex to parse amount from string
+      // Matches: numbers, fractions, decimals, and units
+      const match = ing.match(/^((?:\d+(?:\.\d+)?|\d+\/\d+|\d+\s+\d+\/\d+)(?:\s+\w+)?)\s+(.+)$/);
       if (match) {
         return {
-          amount: match[1]?.trim() || '',
-          name: match[2]?.trim() || ing
+          amount: match[1].trim(),
+          name: match[2].trim()
         };
       }
-      return { name: ing, amount: '' };
+      
+      // If no amount found, return the whole thing as name
+      return { name: ing.trim(), amount: '' };
     }
     return { name: String(ing), amount: '' };
   });
@@ -261,10 +264,32 @@ export const recipeExtractionTool = tool({
         console.log('Found schema.org recipe data');
         
         // Parse the schema.org data into our Recipe format
+        // Extract image URL from various possible formats
+        let imageUrl = undefined;
+        if (jsonLdRecipe.image) {
+          if (typeof jsonLdRecipe.image === 'string') {
+            imageUrl = jsonLdRecipe.image;
+          } else if (jsonLdRecipe.image.url) {
+            imageUrl = jsonLdRecipe.image.url;
+          } else if (Array.isArray(jsonLdRecipe.image) && jsonLdRecipe.image.length > 0) {
+            imageUrl = jsonLdRecipe.image[0];
+          }
+        }
+        
+        // Skip recipes without images
+        if (!imageUrl) {
+          console.log('Skipping recipe without image');
+          return {
+            success: false,
+            error: 'Recipe has no image',
+            recipe: null
+          };
+        }
+        
         const recipe: Recipe = {
           name: jsonLdRecipe.name || 'Untitled Recipe',
           url: url,
-          image: jsonLdRecipe.image?.url || jsonLdRecipe.image || undefined,
+          image: imageUrl,
           description: jsonLdRecipe.description || '',
           ingredients: parseIngredients(jsonLdRecipe.recipeIngredient),
           instructions: parseInstructions(jsonLdRecipe.recipeInstructions),

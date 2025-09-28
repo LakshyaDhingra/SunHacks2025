@@ -112,9 +112,15 @@ export function parseStreamedRecipeResponse(text: string): {
   const markerIndex = text.indexOf('[RECIPES_START]');
   
   if (markerIndex === -1) {
-    // No recipes yet, just status updates
-    const statusLines = text.split('\n').filter(line => line.trim());
-    const lastStatus = statusLines[statusLines.length - 1] || '';
+    // No recipes yet, extract status updates with [STATUS] prefix
+    const statusPattern = /\[STATUS\]([^\n]+)/g;
+    const statusMatches = Array.from(text.matchAll(statusPattern));
+    
+    // Get the last status message (remove the [STATUS] prefix and clean it)
+    const lastStatus = statusMatches.length > 0 
+      ? statusMatches[statusMatches.length - 1][1].trim()
+      : '';
+    
     return {
       status: lastStatus,
       recipes: [],
@@ -139,22 +145,47 @@ export function parseStreamedRecipeResponse(text: string): {
     try {
       // Parse only the complete JSON portion
       const parsed = JSON.parse(jsonCandidate);
+      console.log('Parsed JSON:', parsed);
+      
       if (Array.isArray(parsed)) {
-        recipes = parsed.filter(item => 
-          item && typeof item === 'object' && 
-          (item.name || item.recipe?.name)
-        ).map(item => item.recipe || item);
+        recipes = parsed.filter(item => {
+          // Check various possible structures
+          if (!item || typeof item !== 'object') return false;
+          
+          // Handle nested recipe structure
+          if (item.recipe && typeof item.recipe === 'object') {
+            return true;
+          }
+          
+          // Handle direct recipe structure
+          if (item.name || item.title) {
+            return true;
+          }
+          
+          return false;
+        }).map(item => {
+          // Extract the actual recipe object
+          if (item.recipe && typeof item.recipe === 'object') {
+            return item.recipe;
+          }
+          return item;
+        });
+        
+        console.log(`Found ${recipes.length} recipes after filtering`);
         hasCompleteJson = true;
       }
     } catch (error) {
-      // JSON is still incomplete or malformed, wait for more data
-      // Don't log error to avoid spamming console
+      console.error('Error parsing recipe JSON:', error);
+      console.log('JSON candidate was:', jsonCandidate.substring(0, 200));
     }
   }
   
-  // Get the last status line for display
-  const statusLines = statusText.split('\n').filter(line => line.trim());
-  const lastStatus = statusLines[statusLines.length - 1] || '';
+  // Extract the last status message with [STATUS] prefix
+  const statusPattern = /\[STATUS\]([^\n]+)/g;
+  const statusMatches = Array.from(statusText.matchAll(statusPattern));
+  const lastStatus = statusMatches.length > 0 
+    ? statusMatches[statusMatches.length - 1][1].trim()
+    : '';
   
   return {
     status: lastStatus,

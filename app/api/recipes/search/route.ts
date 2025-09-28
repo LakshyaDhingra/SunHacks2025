@@ -35,24 +35,37 @@ export async function streamRecipeSearch(
     - If extraction fails for a URL, try the next one
     
     Output format:
-    - Provide brief status updates as you work, ONE PER LINE
+    - Each status update MUST be on its own line followed by TWO newlines
+    - Prefix each status with [STATUS] for parsing
     - Examples:
-      "🔍 Searching for chicken rice recipes..."
-      "📖 Extracting recipe from AllRecipes..."
-      "⚠️ Extraction failed, trying next..."
-      "✅ Found 3 matching recipes"
+      "[STATUS]🔍 Searching for chicken rice recipes...
+
+"
+      "[STATUS]📖 Extracting recipe from AllRecipes...
+
+"
+      "[STATUS]⚠️ Extraction failed, trying next...
+
+"
+      "[STATUS]✅ Found 3 matching recipes
+
+"
     - Keep status updates short and action-focused
-    - After gathering all recipes, output: [RECIPES_START] followed by a JSON array of the extracted recipe objects
-    - The JSON should contain the actual recipe objects returned from the extractRecipe tool
-    - Make sure each status update is on its own line
+    - After gathering all recipes, output: [RECIPES_START] followed by a JSON array
+    - The JSON array should contain ONLY the recipe objects (not the full tool response)
+    - Extract just the 'recipe' field from each extractRecipe tool response
+    - Format: [RECIPES_START][{recipe1}, {recipe2}, {recipe3}]
     
     Important:
     - MUST find at least 3 recipes (keep searching if needed)
     - Maximum 5 recipes
+    - ONLY include recipes that have images (if extraction returns no image, skip it)
+    - If a recipe has no image, show status "[STATUS]⚠️ No image found, skipping..." and try the next
+    - Keep searching until you have 3-5 recipes WITH images
     - Try different search queries if the first doesn't yield enough results
     - If extraction fails, note it and try another URL
     - No conversational text or explanations
-    - Just status updates, then [RECIPES_START] marker, then JSON array`;
+    - Just status updates with [STATUS] prefix, then [RECIPES_START] marker, then JSON array`;
 
   const userPrompt = `Ingredients: ${ingredients.join(', ')}
     ${preferences?.dietary ? `Dietary: ${preferences.dietary}` : ''}
