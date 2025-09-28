@@ -159,7 +159,7 @@ export async function streamRecipeSearch(
     Your task:
     1. Search for recipes using the ingredients provided
     2. Extract full recipe details from promising URLs
-    3. Continue searching until you have AT LEAST 3 recipes
+    3. Continue searching until you have AT LEAST 4 recipes
     
     Search strategy:
     - First search with all ingredients together
@@ -180,7 +180,7 @@ export async function streamRecipeSearch(
       "[STATUS]⚠️ Extraction failed, trying next...
 
 "
-      "[STATUS]✅ Found 3 matching recipes
+      "[STATUS]✅ Found 4 matching recipes
 
 "
     - Keep status updates short and action-focused
@@ -189,7 +189,7 @@ export async function streamRecipeSearch(
     - The system will stream the final recipe JSON after you finish.
     
     Important:
-    - MUST find at least 3 recipes (keep searching if needed)
+    - MUST find at least 4 recipes (keep searching if needed)
     - Maximum 5 recipes
     - ONLY include recipes that have images (if extraction returns no image, skip it)
     - If a recipe has no image, show status "[STATUS]⚠️ No image found, skipping..." and try the next

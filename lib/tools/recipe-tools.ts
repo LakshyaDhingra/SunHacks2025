@@ -23,6 +23,7 @@ async function searchWebForRecipes(
     });
 
     if (!response.ok) {
+      console.log(`Error: ${response.statusText}`);
       throw new Error(`Search failed: ${response.statusText}`);
     }
 
