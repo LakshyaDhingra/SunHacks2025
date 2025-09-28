@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { SignUpButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 import NavPills from "./NavPills";
 
 export default function NavBar() {
-  const [user, setUser] = useState<{ name: string; avatar: string } | null>(
-    null
-  );
 
   return (
     <nav className="w-full bg-gradient-to-r from-maroon-500 to-yellow-600 px-6 py-4 shadow-md flex items-center justify-between">
@@ -29,36 +28,19 @@ export default function NavBar() {
 
       {/* Right side: User section */}
       <div className="flex items-center gap-4">
-        {user ? (
-          <>
-            <span className="text-white font-medium">{user.name}</span>
-            <Image
-              src={user.avatar}
-              alt="User avatar"
-              width={36}
-              height={36}
-              className="rounded-full border-2 border-white"
-            />
+        <SignedOut>
+          <SignInButton>
             <button
-              onClick={() => setUser(null)}
-              className="bg-white text-yellow-600 font-semibold px-3 py-1 rounded-lg hover:bg-zinc-100 transition-colors"
+              className="bg-white text-yellow-700 font-semibold px-4 py-2 rounded-lg cursor-pointer hover:bg-zinc-100 transition-colors"
             >
-              Logout
+              Sign In
             </button>
-          </>
-        ) : (
-          <button
-            onClick={() =>
-              setUser({
-                name: "User1",
-                avatar: "/avatar.png",
-              })
-            }
-            className="bg-white text-red-600 font-semibold px-4 py-2 rounded-lg hover:bg-zinc-100 transition-colors"
-          >
-            Login
-          </button>
-        )}
+          </SignInButton>
+        </SignedOut>
+
+        <SignedIn>
+          <UserButton/>
+        </SignedIn>
       </div>
     </nav>
   );
