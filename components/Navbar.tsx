@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import NavPills from "./NavPills";
 
 export default function NavBar() {
   const [user, setUser] = useState<{ name: string; avatar: string } | null>(
@@ -14,6 +15,17 @@ export default function NavBar() {
       <div className="text-2xl font-bold text-white">
         <Image src="/logo_svg.svg" alt="Logo" width={100} height={100} />
       </div>
+
+      {/* Center: Navigation Pills */}
+      <NavPills
+        items={[
+          { label: 'Home', href: '/' },
+          { label: 'Recipes', href: '/recipes' },
+          { label: 'Test', href: '/test-extraction' },
+          { label: 'About', href: '/about' }
+        ]}
+        className="hidden md:flex"
+      />
 
       {/* Right side: User section */}
       <div className="flex items-center gap-4">
