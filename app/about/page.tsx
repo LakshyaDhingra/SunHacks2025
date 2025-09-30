@@ -1,17 +1,15 @@
-import NavBar from "@/components/Navbar";
 export const dynamic = 'force-static';
 
 export default function AboutPage() {
   const team = [
-    { name: 'Matthew Cruz', role: 'Developer', linkedin: '#', image: '/avatar.png' },
-    { name: 'Will Morrison', role: 'Developer', linkedin: '#', image: '/avatar.png' },
-    { name: 'Jesus Aguilar', role: 'Developer', linkedin: '#', image: '/avatar.png' },
-    { name: 'Lakshya Dhingra', role: 'Developer', linkedin: '#', image: '/avatar.png' },
+    { name: 'Matthew Cruz', role: 'Developer', linkedin: '#', image: '/IMG_6798.png' },
+    { name: 'Will Morrison', role: 'Developer', linkedin: '#', image: '/1725477011305.jpg' },
+    { name: 'Jesus Aguilar', role: 'Developer', linkedin: '#', image: '/474660624_612690794801069_3667055654377803390_n.jpg' },
+    { name: 'Lakshya Dhingra', role: 'Developer', linkedin: 'https://www.linkedin.com/in/lakshya-dhingra/', image: '/1709827845387.jpg' },
   ];
 
   return (
     <main>
-      <NavBar />
       <div className="w-full max-w-6xl mx-auto p-6">
         <h1 className="text-4xl font-bold mb-2 text-center text-zinc-900 dark:text-white">About Us</h1>
         <p className="text-center text-zinc-600 dark:text-zinc-400 mb-8">Building smarter cooking with AI—recipes, timers, and more.</p>
